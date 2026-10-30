@@ -1,4 +1,4 @@
-"""Paired statistics for the defect matrix.
+"""Paired statistics for the sensitivity matrix.
 
 Seeds are few (3), so a t-interval is wider than the effect it estimates. The
 primary interval is a bootstrap over statements, stratified by seed: statements

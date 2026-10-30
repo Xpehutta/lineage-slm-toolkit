@@ -1,4 +1,4 @@
-# lineage-defects
+# lineage-slm-toolkit
 
 Toolkit for extracting **column-level Data Lineage** from SQL with a **compact language model**: deterministic contour first, a fine-tuned 8B model on the residual, and a measurement protocol for both.
 
@@ -17,7 +17,7 @@ The repository is **data-free**: a small synthetic example only. No production S
 | `train_config.py` | QLoRA defaults with the reason behind each value (r=16, alpha=16, lr 2e-4, 3 epochs, 4096 tokens, packing off) |
 | `metrics.py` | edge F1 macro and pooled, precision/recall by target arity, exact match; empty prediction scores 0 |
 | `splits.py` | statement-level split and the anchor-exclusion gate |
-| `operators.py` | defect operators for training labels: `edge_label`, `edge_confusable`, `edge_drop`, `edge_dup`, `schema_stale`, `sql_truncate` |
+| `operators.py` | label corruption operators: `edge_label`, `edge_confusable`, `edge_drop`, `edge_dup`, `schema_stale`, `sql_truncate` |
 | `stats.py` | paired bootstrap over statements, minimum detectable effect |
 
 ## Install and run
@@ -25,7 +25,7 @@ The repository is **data-free**: a small synthetic example only. No production S
 ```bash
 pip install -e ".[dev]"
 pytest -q
-lineage-defects --lam 0.25
+lineage-slm-toolkit --lam 0.25
 ```
 
 The demo prints a per-operator metric table, a prompt size, a routing decision, a salvage result from a truncated answer, the QLoRA configuration, the anchor gate, and the MDE.
@@ -55,7 +55,7 @@ Intensity λ is the share of **edges inside one example**, not the share of exam
 
 ## Scope
 
-The toolkit implements the instruments, not a measured defect matrix. It does not train models. Effects measured with it are only as good as the evaluation anchors and the number of seeds.
+The toolkit implements the instruments, not a measured sensitivity matrix. It does not train models. Effects measured with it are only as good as the evaluation anchors and the number of seeds.
 
 ## License
 

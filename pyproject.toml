@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "lineage-defects"
+name = "lineage-slm-toolkit"
 version = "0.1.0"
-description = "Defect operators, metrics and statistical protocol for measuring how training-data defects affect Data Lineage extraction models"
+description = "Toolkit for Data Lineage extraction with compact language models: contour arbitration, prompting, QLoRA configuration, metrics and label-corruption operators"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -15,7 +15,7 @@ dependencies = ["numpy>=1.26"]
 dev = ["pytest>=8"]
 
 [project.scripts]
-lineage-defects = "lineage_defects.cli:main"
+lineage-slm-toolkit = "lineage_toolkit.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["lineage_defects*"]
+include = ["lineage_toolkit*"]

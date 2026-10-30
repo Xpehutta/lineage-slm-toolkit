@@ -4,7 +4,7 @@ Two groups:
 
 * contour: arbitration between deterministic parsers, routing to the model,
   quote/case normalisation, JSON salvage for truncated answers;
-* protocol: defect operators, edge-level metrics, statement-level splits,
+* protocol: label-corruption operators, edge-level metrics, statement-level splits,
   paired statistics.
 
 The package is data-free: a synthetic example only, no production SQL.

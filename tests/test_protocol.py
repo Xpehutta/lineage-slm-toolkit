@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
 
-from lineage_defects.contour import agreement, compose
-from lineage_defects.metrics import exact_match, macro_f1, pooled_f1
-from lineage_defects.operators import EdgePool, Example, edge_label
-from lineage_defects.splits import anchor_gate, split_by_statement
-from lineage_defects.stats import mde, required_n
+from lineage_toolkit.contour import agreement, compose
+from lineage_toolkit.metrics import exact_match, macro_f1, pooled_f1
+from lineage_toolkit.operators import EdgePool, Example, edge_label
+from lineage_toolkit.splits import anchor_gate, split_by_statement
+from lineage_toolkit.stats import mde, required_n
 
 
 def _ex(n_edges=3):

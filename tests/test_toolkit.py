@@ -1,10 +1,10 @@
 import numpy as np
 import pytest
 
-from lineage_defects.prompts import build_messages, schema_slice
-from lineage_defects.route import needs_model
-from lineage_defects.salvage import dedupe_edges, salvage_edges
-from lineage_defects.train_config import QLoRAConfig
+from lineage_toolkit.prompts import build_messages, schema_slice
+from lineage_toolkit.route import needs_model
+from lineage_toolkit.salvage import dedupe_edges, salvage_edges
+from lineage_toolkit.train_config import QLoRAConfig
 
 
 def test_salvage_recovers_complete_objects_from_truncated_text():
