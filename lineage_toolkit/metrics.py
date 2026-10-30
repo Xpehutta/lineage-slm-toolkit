@@ -50,24 +50,56 @@ def pooled_f1(preds: Sequence[set[Edge]], gts: Sequence[set[Edge]]) -> float:
     return 2 * precision * recall / (precision + recall) if precision + recall else 0.0
 
 
-def by_arity(preds: Sequence[set[Edge]], gts: Sequence[set[Edge]], buckets=(1, 2, 5, 15)) -> dict[str, dict]:
-    """Precision and recall split by the number of sources in the reference.
+def _arity_label(arity: int, buckets: Sequence[int]) -> str:
+    """Bucket label for a target with this many sources: 1, 2-5, 6-15, >15."""
+    low = 1
+    for bound in buckets:
+        if arity <= bound:
+            return f"<= {low}" if low == bound == 1 else f"{low}-{bound}" if low > 1 else f"<= {bound}"
+        low = bound + 1
+    return f"> {buckets[-1]}"
 
-    Wide targets are where models lose sources; a single F1 hides that.
+
+def by_arity(preds: Sequence[set[Edge]], gts: Sequence[set[Edge]], buckets=(1, 5, 15)) -> dict[str, dict]:
+    """Precision and recall split by the number of sources feeding each target.
+
+    Arity belongs to a target column, not to a statement: one SELECT can carry a
+    single-source column and a thirty-source column at once. Bucketing per
+    target exposes the missing-source failure on wide targets, which a
+    statement-level score averages away.
+
+    Predictions for a target absent from the reference carry no arity, so they
+    are collected under "no reference target": precision only, recall undefined.
     """
-    groups: dict[str, list[tuple[set[Edge], set[Edge]]]] = defaultdict(list)
+    acc: dict[str, dict] = defaultdict(lambda: {"n_targets": 0, "tp": 0, "fp": 0, "fn": 0})
     for p, g in zip(preds, gts):
-        arity = len({(t, c) for (t, c, _, _) in g})
-        label = f"> {buckets[-1]}" if arity > buckets[-1] else f"<= {buckets[0]}" if arity <= buckets[0] else "2-5" if arity <= buckets[1] else "6-15"
-        groups[label].append((p, g))
+        gt_sources: dict[tuple[str, str], set[tuple[str, str]]] = defaultdict(set)
+        for (t, c, st, sc) in g:
+            gt_sources[(t, c)].add((st, sc))
+        pred_sources: dict[tuple[str, str], set[tuple[str, str]]] = defaultdict(set)
+        for (t, c, st, sc) in p:
+            pred_sources[(t, c)].add((st, sc))
+        for target, ref in gt_sources.items():
+            cell = acc[_arity_label(len(ref), buckets)]
+            cell["n_targets"] += 1
+            got = pred_sources.get(target, set())
+            cell["tp"] += len(got & ref)
+            cell["fp"] += len(got - ref)
+            cell["fn"] += len(ref - got)
+        for target, got in pred_sources.items():
+            if target in gt_sources:
+                continue
+            cell = acc["no reference target"]
+            cell["n_targets"] += 1
+            cell["fp"] += len(got)
     out = {}
-    for label, rows in groups.items():
-        tp = sum(len(p & g) for p, g in rows)
-        fp = sum(len(p - g) for p, g in rows)
-        fn = sum(len(g - p) for p, g in rows)
-        precision = tp / (tp + fp) if tp + fp else 0.0
-        recall = tp / (tp + fn) if tp + fn else 0.0
-        out[label] = {"n": len(rows), "precision": round(precision, 4), "recall": round(recall, 4)}
+    for label, cell in acc.items():
+        tp, fp, fn = cell["tp"], cell["fp"], cell["fn"]
+        out[label] = {
+            "n_targets": cell["n_targets"],
+            "precision": round(tp / (tp + fp), 4) if tp + fp else 0.0,
+            "recall": round(tp / (tp + fn), 4) if tp + fn else None,
+        }
     return dict(sorted(out.items()))
 
 

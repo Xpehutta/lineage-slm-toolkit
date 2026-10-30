@@ -47,3 +47,33 @@ def test_qlora_defaults_match_the_article():
     assert cfg.lora_r == 16 and cfg.lora_alpha == 16
     assert cfg.effective_batch() == 16
     assert cfg.packing is False and cfg.epochs == 3
+
+
+def test_by_arity_buckets_per_target_not_per_statement():
+    """One statement can hold a one-source target and an eight-source target."""
+    from lineage_toolkit.metrics import by_arity
+
+    narrow = [("dw.f", "dt", "ods.loan", "dt")]
+    wide = [("dw.f", "amount", f"ods.p{i}", "amt") for i in range(8)]
+    gt = set(narrow) | set(wide)
+    pred = set(wide[:5]) | {("dw.f", "amount", "ods.rate", "rate")}
+
+    buckets = by_arity([pred], [gt])
+
+    assert buckets["<= 1"]["n_targets"] == 1
+    assert buckets["<= 1"]["recall"] == 0.0
+    # five of eight reference sources kept, plus one invented source
+    assert buckets["6-15"]["recall"] == 0.625
+    assert buckets["6-15"]["precision"] == 0.8333
+
+
+def test_by_arity_flags_predictions_for_absent_targets():
+    from lineage_toolkit.metrics import by_arity
+
+    gt = {("dw.f", "amount", "ods.loan", "a")}
+    pred = gt | {("dw.f", "phantom", "ods.loan", "a")}
+
+    buckets = by_arity([pred], [gt])
+
+    assert buckets["no reference target"]["n_targets"] == 1
+    assert buckets["no reference target"]["recall"] is None
