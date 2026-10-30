@@ -1,0 +1,44 @@
+[
+  {
+    "id": "s001",
+    "sql": "INSERT INTO mart.daily_sales SELECT o.order_id, c.customer_name, o.amount FROM raw.orders o JOIN raw.customers c ON o.customer_id = c.customer_id",
+    "schema": ["mart.daily_sales", "raw.orders", "raw.customers"],
+    "edges": [
+      {"target": {"table": "mart.daily_sales", "column": "order_id"}, "sources": [{"table": "raw.orders", "column": "order_id"}]},
+      {"target": {"table": "mart.daily_sales", "column": "customer_name"}, "sources": [{"table": "raw.customers", "column": "customer_name"}]},
+      {"target": {"table": "mart.daily_sales", "column": "amount"}, "sources": [{"table": "raw.orders", "column": "amount"}]}
+    ]
+  },
+  {
+    "id": "s002",
+    "sql": "INSERT INTO mart.monthly_totals SELECT date_trunc('month', o.order_date) AS month, sum(o.amount) FROM raw.orders o GROUP BY 1",
+    "schema": ["mart.monthly_totals", "raw.orders"],
+    "edges": [
+      {"target": {"table": "mart.monthly_totals", "column": "month"}, "sources": [{"table": "raw.orders", "column": "order_date"}]},
+      {"target": {"table": "mart.monthly_totals", "column": "total"}, "sources": [{"table": "raw.orders", "column": "amount"}]}
+    ]
+  },
+  {
+    "id": "s003",
+    "sql": "INSERT INTO mart.customer_profile SELECT c.customer_id, c.customer_name, a.city FROM raw.customers c JOIN raw.addresses a ON c.customer_id = a.customer_id",
+    "schema": ["mart.customer_profile", "raw.customers", "raw.addresses"],
+    "edges": [
+      {"target": {"table": "mart.customer_profile", "column": "customer_id"}, "sources": [{"table": "raw.customers", "column": "customer_id"}]},
+      {"target": {"table": "mart.customer_profile", "column": "name"}, "sources": [{"table": "raw.customers", "column": "customer_name"}]},
+      {"target": {"table": "mart.customer_profile", "column": "city"}, "sources": [{"table": "raw.addresses", "column": "city"}]}
+    ]
+  },
+  {
+    "id": "s004",
+    "sql": "INSERT INTO mart.wide_target SELECT o.order_id, o.amount, c.customer_name, c.segment, a.city, a.region FROM raw.orders o JOIN raw.customers c ON o.customer_id = c.customer_id JOIN raw.addresses a ON c.customer_id = a.customer_id",
+    "schema": ["mart.wide_target", "raw.orders", "raw.customers", "raw.addresses"],
+    "edges": [
+      {"target": {"table": "mart.wide_target", "column": "order_id"}, "sources": [{"table": "raw.orders", "column": "order_id"}]},
+      {"target": {"table": "mart.wide_target", "column": "amount"}, "sources": [{"table": "raw.orders", "column": "amount"}]},
+      {"target": {"table": "mart.wide_target", "column": "customer_name"}, "sources": [{"table": "raw.customers", "column": "customer_name"}]},
+      {"target": {"table": "mart.wide_target", "column": "segment"}, "sources": [{"table": "raw.customers", "column": "segment"}]},
+      {"target": {"table": "mart.wide_target", "column": "city"}, "sources": [{"table": "raw.addresses", "column": "city"}]},
+      {"target": {"table": "mart.wide_target", "column": "region"}, "sources": [{"table": "raw.addresses", "column": "region"}]}
+    ]
+  }
+]
