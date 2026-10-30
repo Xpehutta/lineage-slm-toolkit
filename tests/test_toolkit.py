@@ -42,10 +42,12 @@ def test_routing_prefers_contour_and_escalates_when_empty():
     assert needs_model([{"target": {}}], 0.2)[1] == "low_agreement"
 
 
-def test_qlora_defaults_match_the_article():
+def test_qlora_defaults_match_the_logged_run():
     cfg = QLoRAConfig()
     assert cfg.lora_r == 16 and cfg.lora_alpha == 16
-    assert cfg.effective_batch() == 16
+    assert cfg.effective_batch() == 8
+    assert cfg.max_seq_length == 8192
+    assert cfg.lr_scheduler == "linear" and cfg.warmup_steps == 15
     assert cfg.packing is False and cfg.epochs == 3
 
 
