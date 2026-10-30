@@ -10,10 +10,15 @@ import numpy as np
 from .contour import agreement, compose
 from .metrics import by_arity, exact_match, macro_f1, pooled_f1
 from .operators import OPERATORS, EdgePool, Example
+from .prompts import build_messages, schema_slice
+from .route import needs_model
+from .salvage import dedupe_edges, salvage_edges
 from .splits import anchor_gate, split_by_statement
 from .stats import mde, required_n
+from .train_config import QLoRAConfig
 
 EXAMPLE = Path(__file__).resolve().parent.parent / "examples" / "synthetic_statements.json"
+TRUNCATED = '{"edges": [{"target": {"table": "m", "column": "c1"}, "sources": [{"table": "r", "column": "c1"}]}, {"target": {"table": "m", "colu'
 
 
 def load_examples(path: Path = EXAMPLE) -> list[Example]:
@@ -39,6 +44,19 @@ def demo(lam: float = 0.25, seed: int = 42) -> None:
                         for e in ex.edges for s in e.get("sources", [])})
         print(f"{name:16s} {macro_f1(preds, gts):9.3f} {pooled_f1(preds, gts):8.3f} {exact_match(preds, gts):7.3f} {cols:11d}")
 
+    first = examples[0]
+    slice_ = schema_slice({t: ["id", "amount"] for t in first.schema}, first.schema)
+    msgs = build_messages(first.sql, first.edges[0]["target"]["table"], slice_)
+    print(f"prompt: {len(msgs)} messages, {len(msgs[1]['content'])} chars in the user turn")
+    print(f"routing: {needs_model([], agreement([], []))}, {needs_model(first.edges, 0.9)}")
+
+    recovered = dedupe_edges(salvage_edges(TRUNCATED))
+    print(f"salvage: {len(recovered)} complete edge(s) from a truncated answer")
+
+    cfg = QLoRAConfig()
+    print(f"QLoRA: r={cfg.lora_r}, alpha={cfg.lora_alpha}, lr={cfg.learning_rate}, "
+          f"effective batch={cfg.effective_batch()}, packing={cfg.packing}")
+
     split = split_by_statement([{"id": e.id} for e in examples])
     gate = anchor_gate(split, [e.id for e in examples[:2]])
     print(f"anchor gate: {gate}")
@@ -46,7 +64,7 @@ def demo(lam: float = 0.25, seed: int = 42) -> None:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Demo of defect operators on synthetic lineage data")
+    ap = argparse.ArgumentParser(description="Demo of the lineage extraction toolkit on synthetic data")
     ap.add_argument("--lam", type=float, default=0.25)
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()

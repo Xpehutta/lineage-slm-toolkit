@@ -1,19 +1,33 @@
-"""Defect operators and measurement protocol for Data Lineage extraction.
+"""Measuring instruments for Data Lineage extraction with compact language models.
 
-The package is deliberately data-free: it ships with a synthetic example only.
-Production SQL and catalog dumps are not part of the distribution.
+Two groups:
+
+* contour: arbitration between deterministic parsers, routing to the model,
+  quote/case normalisation, JSON salvage for truncated answers;
+* protocol: defect operators, edge-level metrics, statement-level splits,
+  paired statistics.
+
+The package is data-free: a synthetic example only, no production SQL.
 """
-from .operators import Example, EdgePool, OPERATORS, apply_operator
-from .metrics import edge_f1, macro_f1, pooled_f1, by_arity, exact_match
+from .contour import agreement, compose, THIN_RATIO
+from .route import needs_model, AGREEMENT_THRESHOLD
+from .salvage import salvage_edges, dedupe_edges
+from .prompts import build_messages, schema_slice, SYSTEM
+from .train_config import QLoRAConfig
+from .metrics import edge_f1, macro_f1, pooled_f1, by_arity, exact_match, edge_set
 from .splits import split_by_statement, anchor_gate
-from .stats import paired_bootstrap, mde
-from .contour import agreement, compose
+from .stats import paired_bootstrap, mde, required_n
+from .operators import Example, EdgePool, OPERATORS, apply_operator
 
 __all__ = [
-    "Example", "EdgePool", "OPERATORS", "apply_operator",
-    "edge_f1", "macro_f1", "pooled_f1", "by_arity", "exact_match",
+    "agreement", "compose", "THIN_RATIO",
+    "needs_model", "AGREEMENT_THRESHOLD",
+    "salvage_edges", "dedupe_edges",
+    "build_messages", "schema_slice", "SYSTEM",
+    "QLoRAConfig",
+    "edge_f1", "macro_f1", "pooled_f1", "by_arity", "exact_match", "edge_set",
     "split_by_statement", "anchor_gate",
-    "paired_bootstrap", "mde",
-    "agreement", "compose",
+    "paired_bootstrap", "mde", "required_n",
+    "Example", "EdgePool", "OPERATORS", "apply_operator",
 ]
-__version__ = "0.1.0"
+__version__ = "0.2.0"

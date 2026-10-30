@@ -1,21 +1,26 @@
 # lineage-defects
 
-Defect operators, metrics and a statistical protocol for measuring how **training-data defects** affect **Data Lineage extraction** models.
+Toolkit for extracting **column-level Data Lineage** from SQL with a **compact language model**: deterministic contour first, a fine-tuned 8B model on the residual, and a measurement protocol for both.
 
-Companion code for the article *«Протокол измерения и базовые линии: что уже измерено и что предстоит измерить»* (How to measure the sensitivity of a compact language model to training-data defects).
+Companion code for the article *«Как дообучить компактную языковую модель разбирать SQL и строить Data Lineage»*.
 
-The repository is deliberately **data-free**: it ships a small synthetic example only. No production SQL, no catalog dumps, no bank schemas.
+The repository is **data-free**: a small synthetic example only. No production SQL, no catalog dumps, no bank schemas.
 
-## What problem it solves
+## What is inside
 
-A data-quality report says *how much* of the data is broken. It does not say *how much worse the model gets*. This package provides the measuring instruments:
+| Module | What it does |
+|---|---|
+| `contour.py` | statement-level arbitration between two parsers: empty → primary, thinner than `THIN_RATIO = 0.4` → primary, otherwise secondary; conflicts returned as an audit list, never merged |
+| `route.py` | when to call the model: empty contour or agreement below `AGREEMENT_THRESHOLD` |
+| `prompts.py` | ChatML messages and schema slicing — the model sees only the tables of its statement |
+| `salvage.py` | recovers complete JSON objects from a truncated answer, then collapses repetition loops |
+| `train_config.py` | QLoRA defaults with the reason behind each value (r=16, alpha=16, lr 2e-4, 3 epochs, 4096 tokens, packing off) |
+| `metrics.py` | edge F1 macro and pooled, precision/recall by target arity, exact match; empty prediction scores 0 |
+| `splits.py` | statement-level split and the anchor-exclusion gate |
+| `operators.py` | defect operators for training labels: `edge_label`, `edge_confusable`, `edge_drop`, `edge_dup`, `schema_stale`, `sql_truncate` |
+| `stats.py` | paired bootstrap over statements, minimum detectable effect |
 
-- **defect operators** that corrupt the *labels* of a lineage example (an edge = target column plus its source columns), not just the inputs;
-- **metrics** suited to structural extraction (macro/pooled edge F1, precision/recall by target arity, exact match);
-- **protocol helpers**: statement-level splits, anchor-exclusion gate, paired bootstrap, minimum detectable effect;
-- **contour arbitration** between two deterministic parsers, with an audit list of conflicts instead of a silent merge.
-
-## Install
+## Install and run
 
 ```bash
 pip install -e ".[dev]"
@@ -23,41 +28,34 @@ pytest -q
 lineage-defects --lam 0.25
 ```
 
+The demo prints a per-operator metric table, a prompt size, a routing decision, a salvage result from a truncated answer, the QLoRA configuration, the anchor gate, and the MDE.
+
+## How the pieces fit
+
+1. **Contour.** Two parsers disagree by design; the arbiter picks one per statement and records conflicting targets.
+2. **Routing.** The model is called only when the contour is empty or the parsers disagree strongly. Everything else stays deterministic and free.
+3. **Prompt.** System instruction plus the statement and a schema slice of its own tables — not the whole catalog.
+4. **Answer.** Truncated JSON is salvaged object by object; duplicates are collapsed; identifiers then pass the same catalog check as parser output.
+5. **Measurement.** macro and pooled edge F1 together, precision and recall by arity, exact match.
+
 ## Defect operators
+
+They corrupt the **labels**, not only the inputs, because a wrong edge teaches the model a wrong dependency with high confidence.
 
 | Operator | What it does |
 |---|---|
-| `edge_label` | replaces **one** source of an edge with a source of a **different** target |
+| `edge_label` | replaces **one** source of an edge with a source of a **different** target; collisions counted |
 | `edge_confusable` | replaces a source with a column of the table whose name is closest (Levenshtein) |
 | `edge_drop` | removes a share of edges from the reference set |
-| `edge_dup` | duplicates edges, skewing the example towards frequent targets |
-| `schema_stale` | renames schema entries, imitating stale catalog data |
+| `edge_dup` | duplicates edges, skewing towards frequent targets |
+| `schema_stale` | renames schema entries, imitating a stale catalog |
 | `sql_truncate` | cuts the statement, imitating a lost input fragment |
 
-Intensity λ is the share of **edges inside one example**, not the share of examples — statements range from 3 to 190 edges, so per-example intensity would mean a third of the labels in a small statement and one percent in a large one.
+Intensity λ is the share of **edges inside one example**, not the share of examples: statements range from 3 to 190 edges.
 
-`edge_label` counts **collisions**: replacements that accidentally equal an existing source and therefore leave the edge correct. Effective intensity is lower than nominal λ by that share, so collisions are reported next to the effect.
+## Scope
 
-## Metrics
-
-- **macro F1** — mean per-statement F1; an empty prediction scores 0, not skipped;
-- **pooled F1** — F1 over all edges; shows the cost on the stream;
-- **precision/recall by arity** — 1 source, 2–5, 6–15, more than 15. Wide targets are where models lose sources; a single F1 hides it;
-- **exact match** — strict set equality per statement.
-
-## Protocol helpers
-
-`split_by_statement` splits by statement id, so fragments of one query cannot straddle the split. `anchor_gate` returns the intersection of evaluation-anchor ids with train/validation — a non-empty list means the run is contaminated and must not be reported.
-
-`paired_bootstrap` resamples statements inside each seed and averages across seeds; `mde` derives the minimum detectable effect instead of asserting it: with sd = 0.11 and ten anchors, Δ ≈ 0.10 F1, and reaching 0.05 needs about 38 anchors.
-
-## Synthetic example
-
-`examples/synthetic_statements.json` contains four invented statements over invented tables (`mart.daily_sales`, `raw.orders`, …). It exists to make the CLI runnable and the tests self-contained.
-
-## Scope and limitations
-
-The package implements the **measuring instruments**, not a measured defect matrix. It does not train models. Effects reported with these tools are only as good as the evaluation anchors and the number of seeds; see the article's section on minimum detectable effect.
+The toolkit implements the instruments, not a measured defect matrix. It does not train models. Effects measured with it are only as good as the evaluation anchors and the number of seeds.
 
 ## License
 
