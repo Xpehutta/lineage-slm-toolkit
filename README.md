@@ -14,7 +14,7 @@ The repository is **data-free**: a small synthetic example only. No production S
 | `route.py` | when to call the model: empty contour or agreement below `AGREEMENT_THRESHOLD` |
 | `prompts.py` | ChatML messages and schema slicing — the model sees only the tables of its statement |
 | `salvage.py` | recovers complete JSON objects from a truncated answer, then collapses repetition loops |
-| `train_config.py` | QLoRA defaults with the reason behind each value (r=16, alpha=16, lr 2e-4, 3 epochs, 4096 tokens, packing off) |
+| `train_config.py` | QLoRA defaults with the reason behind each value (r=16, alpha=16, lr 2e-4, 3 epochs, 8192 tokens, batch 1 × 8 accumulation, linear schedule, packing off) |
 | `metrics.py` | edge F1 macro and pooled, precision/recall by target arity, exact match; empty prediction scores 0 |
 | `splits.py` | statement-level split and the anchor-exclusion gate |
 | `operators.py` | label corruption operators: `edge_label`, `edge_confusable`, `edge_drop`, `edge_dup`, `schema_stale`, `sql_truncate` |
