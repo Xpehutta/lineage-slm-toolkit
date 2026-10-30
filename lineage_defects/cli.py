@@ -59,8 +59,9 @@ def demo(lam: float = 0.25, seed: int = 42) -> None:
 
     split = split_by_statement([{"id": e.id} for e in examples])
     clean = anchor_gate(split, ["anchor-not-in-corpus"])
-    leak = anchor_gate(split, [examples[0].id])
-    print(f"anchor gate, clean corpus: {clean['passed']}; with a leaked anchor: {leak['passed']} "
+    train_id = split["train"][0]["id"]
+    leak = anchor_gate(split, [train_id])
+    print(f"anchor gate: clean {clean['passed']}, leak {leak['passed']} "
           f"(train hits: {leak['train']})")
     print(f"MDE at n=10, sd=0.11: {mde(0.11, 10):.3f} F1; anchors needed for 0.05: {required_n(0.11, 0.05)}")
 
