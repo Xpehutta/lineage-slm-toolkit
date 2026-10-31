@@ -1,0 +1,89 @@
+{
+  "cases": 8,
+  "passed": 8,
+  "failed": 0,
+  "edges_expected": 30,
+  "edges_hit": 30,
+  "results": [
+    {
+      "case": "alias_reuse",
+      "class": "alias reuse",
+      "expected": 2,
+      "hit": 2,
+      "missed": [],
+      "extra": [],
+      "picked": "secondary",
+      "notes": "the same alias a is bound at two nesting levels"
+    },
+    {
+      "case": "cte_self_join",
+      "class": "cte self-join",
+      "expected": 2,
+      "hit": 2,
+      "missed": [],
+      "extra": [],
+      "picked": "secondary",
+      "notes": "one CTE joined to itself through a second CTE level"
+    },
+    {
+      "case": "nested_subquery",
+      "class": "correlated subquery",
+      "expected": 2,
+      "hit": 2,
+      "missed": [],
+      "extra": [],
+      "picked": "secondary",
+      "notes": "aggregate in a scalar subquery correlated to the outer table"
+    },
+    {
+      "case": "wide_projection",
+      "class": "wide projection",
+      "expected": 13,
+      "hit": 13,
+      "missed": [],
+      "extra": [],
+      "picked": "secondary",
+      "notes": "12 sources reach one target column"
+    },
+    {
+      "case": "union_branches",
+      "class": "union branches",
+      "expected": 4,
+      "hit": 4,
+      "missed": [],
+      "extra": [],
+      "picked": "secondary",
+      "notes": "two branches give the same target column different origins"
+    },
+    {
+      "case": "quoted_identifiers",
+      "class": "quoted identifiers",
+      "expected": 2,
+      "hit": 2,
+      "missed": [],
+      "extra": [],
+      "picked": "secondary",
+      "notes": "mixed case and quoting; edges are compared case-folded"
+    },
+    {
+      "case": "window_over_derived",
+      "class": "window over derived",
+      "expected": 3,
+      "hit": 3,
+      "missed": [],
+      "extra": [],
+      "picked": "secondary",
+      "notes": "window function applied to a derived table"
+    },
+    {
+      "case": "schema_qualified",
+      "class": "schema qualification",
+      "expected": 2,
+      "hit": 2,
+      "missed": [],
+      "extra": [],
+      "picked": "secondary",
+      "notes": "one table written with a schema predicate, another without"
+    }
+  ]
+}

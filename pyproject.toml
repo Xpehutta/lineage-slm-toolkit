@@ -13,6 +13,7 @@ dependencies = ["numpy>=1.26"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+parsers = ["sqlglot>=30,<31", "sqllineage>=1.5,<2"]
 
 [project.scripts]
 lineage-slm-toolkit = "lineage_toolkit.cli:main"

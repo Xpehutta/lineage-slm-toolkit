@@ -53,6 +53,36 @@ They corrupt the **labels**, not only the inputs, because a wrong edge teaches t
 
 Intensity λ is the share of **edges inside one example**, not the share of examples: statements range from 3 to 190 edges.
 
+## Adversarial SQL harness
+
+One synthetic example certifies one shape of SQL. This harness replaces the single golden set with a generator: statements whose expected edges are known by construction, one class per failure mode.
+
+| Class | What it probes |
+|---|---|
+| alias reuse | the same alias bound at two nesting levels |
+| cte self-join | one CTE joined to itself through a second level |
+| correlated subquery | an aggregate tied to the outer row |
+| wide projection | twelve sources reaching one target column |
+| union branches | one target column with different origins per branch |
+| quoted identifiers | mixed case and quoting |
+| window over derived | a window function over a derived table |
+| schema qualification | the same table written with and without a schema |
+
+Each case is an `INSERT ... SELECT`: column lineage is undefined without a target. The oracle is analytic — the generator builds the query and the edge set from the same plan, so no parser decides what is true. Both parsers run, the contour arbitrates by its own rules, and the composed result is compared with the oracle on table basename, column and case.
+
+```bash
+pip install -e ".[parsers]"
+python scripts/adversarial_report.py     # table + results/adversarial_report.json
+pytest -q tests/test_adversarial.py
+```
+
+Current result: **8/8 cases clean, 30/30 edges**. The harness earned its keep before it was committed:
+
+- a window partition key is an input to the value, so `running_amount` has three sources, not two — the oracle was wrong and the parser right;
+- sqllineage drops schema prefixes, so the comparison canonicalises table basenames, otherwise every case looks broken;
+- the contour picked the secondary parser on all eight cases: on adversarial shapes the arbitration rule degenerates to "always take sqllineage", which is a finding about the contour, not about the test.
+
+Scope and non-goals: `docs/adversarial_sql_scope.md`.
 ## Scope
 
 The toolkit implements the instruments, not a measured sensitivity matrix. It does not train models. Effects measured with it are only as good as the evaluation anchors and the number of seeds.
